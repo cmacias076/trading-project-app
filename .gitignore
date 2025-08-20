@@ -1,0 +1,38 @@
+# Virtual Environments
+venv/
+.env
+
+# Python compiled files
+*.pyc
+__pycache__/
+
+# Django migrations and caches
+*/migrations/*.pyc
+*/migrations/__pycache__/
+
+# Database
+*.sqlite3
+
+# Logs
+*.log
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Caches from testing/tools
+.tox/
+.pytest_cache/
+.cache/
+.mypy_cache/
+
+# OS and IDE files
+.DS_Store
+.vscode/
+.idea/
+
+# Wireframe backups
+*.excalidraw
+
+
