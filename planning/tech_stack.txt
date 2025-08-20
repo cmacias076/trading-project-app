@@ -1,0 +1,29 @@
+Tech Stack for Paper Trading Application
+
+Backend
+- Python:
+   Python will be used to handle data processing, trade logic, and integration with external APIs.
+- Django: 
+   Django is used as the main web framework to handle routing, models, views and templates. 
+
+Database
+- MySQL:
+   - A relational database used to store portfolio data, user holdings, and transaction history.
+   - Integrated with Django using Django's built-in ORM and mysqlclient or PyMySQL as the database connector.
+
+Financial Data Source
+- yfinance:
+   - A Python library for downloading historical and real-time financial data from Yahoo Finance.
+   - No API key required, easy to integrate, and ideal for educational or simulation purposes. 
+
+Charting Library
+-Chart.js
+   - A lightweight and flexible JavaScript charting library.
+   - Used to display historical instrument prices and portfolio value over time.
+   - Integrated into Django templates using HTML and JavaScript.
+
+Frontend 
+-Django Templates + HTML/CSS
+   - Django's template engine is used to build dynamic pages
+   - HTML and CSS will be used for layout and styling.
+   - JavaScript will be used for interactive elements such as charts and trade validation. 

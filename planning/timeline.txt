@@ -1,0 +1,44 @@
+7-Day Project Timeline
+
+Day 1: Setup & Data Model
+- Set up Django Project and app
+- Connect to MySQL 
+- Implement models based on the data model (Instrument, Holding, Transaction, Portfolio) 
+- Run migrations and test basic data creation in Django admin.
+
+
+Day 2: Instrument List & Price Fetching
+- Select 3-5 financial instruments (e.g., AAPL, TSLA, MSFT)
+- Integrate yfinance to fetch current prices and historical diagram
+- Display instrument list with latest prices on homepage
+
+
+Day 3: Historical Price Chart
+- Implement detail page for each instrument
+- Use Chart.js to display historical price data in an interactive line chart
+
+
+Day 4: Trading Functionality 
+- Create buy/sell forms for selected instrument
+- Validate buy (cash balance) and sell (owned shares) transactions
+- Update holdings and cash balance accordingly
+
+
+Day 5: Portfolio Overview
+- Create portfolio page showing:
+  - Current cash balance
+  - Holdings with quantity and market value
+  - Total portfolio value ( cash + holdings)
+
+
+Day 6: Transaction History & Portfolio Value Chart
+- Implement transaction history page listing all trades
+- Add PortfolioSnapshot model to record daily portfolio value
+- Use Chart.js to show portfolio value fluctuations over time
+
+
+Day 7: Testing, UI Improvements & Wrap-up 
+- Test all functionalities end-to-end
+- Fix bugs and edge cases
+- Improve UI with CSS or Bootstrap 
+- Add portfolio reset functionality 

@@ -1,0 +1,3 @@
+Project Summary
+
+This paper trading app lets a single user simulate buying and selling a small set of financial instruments using historical and current prices. The user starts with a fixed virtual cash balance and can trade to build a portfolio. The app shows real-time prices, historical charts, transaction history, and tracks portfolio value over time.
