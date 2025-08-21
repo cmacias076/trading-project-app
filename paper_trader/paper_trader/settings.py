@@ -1,3 +1,6 @@
+import pymysql
+pymysql.install_as_MySQLdb()
+
 """
 Django settings for paper_trader project.
 
@@ -75,8 +78,12 @@ WSGI_APPLICATION = 'paper_trader.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'paper_trader_db',
+        'USER': 'django_user',
+        'PASSWORD': 'LoveMyWeens2023!',
+        'HOST': 'localhost',
+        'PORT': '3306',
     }
 }
 

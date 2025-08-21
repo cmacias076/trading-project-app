@@ -12,7 +12,7 @@ class Portfolio(models.Model):
     cash_balance = models.DecimalField(max_digits=12, decimal_places=2)
 
     def __str__(self):
-        return f"Portfolio - Cash: ${self.cash_balnce}"
+        return f"Portfolio - Cash: ${self.cash_balance}"
     
 class Holding(models.Model):
     instrument = models.ForeignKey(Instrument, on_delete=models.CASCADE)
