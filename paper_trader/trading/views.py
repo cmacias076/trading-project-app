@@ -1,7 +1,8 @@
 import json
-from django.shortcuts import render, get_object_or_404
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Portfolio, Holding, Transaction, Instrument
+from .forms import BuyForm
 import yfinance as yf
-from .models import Instrument
 
 def instrument_list(request):
     instruments_data = []
@@ -34,12 +35,77 @@ def instrument_detail(request, symbol):
     dates = hist.index.strftime('%Y-%m-%d').tolist()
     close_prices = hist['Close'].round(2).tolist()
 
+    # Portfolio for the "single user"
+    portfolio = Portfolio.objects.first()
+    price = instrument.current_price
+    message = ""
+    success = False
+
+    if request.method == 'POST':
+        form = BuyForm(request.POST)
+        if form.is_valid():
+            quantity = form.cleaned_data['quantity']
+            total_cost = quantity * price
+             
+            # Check if the user has enough cash
+            if portfolio.cash_balance >= total_cost:
+                # Deduct from cash
+                portfolio.cash_balance -= total_cost
+                portfolio.save()
+
+                 # Add to holdings
+                holding, created = Holding.objects.get_or_create(
+                    instrument=instrument,
+                    portfolio=portfolio,
+                    defaults={'quantity': quantity}
+                )
+                if not created:
+                    holding.quantity += quantity
+                    holding.save()
+
+                # Record the transaction
+                Transaction.objects.create(
+                    instrument=instrument,
+                    portfolio=portfolio,
+                    type='BUY',
+                    quantity=quantity,
+                    price=price
+                )
+
+                message = f"Successfully bought {quantity} shares of {instrument.symbol} at ${price}"
+                success = True
+            else:
+                message = "Insufficient cash to complete purchase."
+        else:
+            message = "Invalid quantity entered."
+
+    else:
+        form = BuyForm()
+
     context = {
         'instrument': instrument,
         'dates_json': json.dumps(dates),
         'close_prices_json': json.dumps(close_prices),
         'latest_price': ticker.info.get('regularMarketPrice', 'N/A'),
         'previous_close': ticker.info.get('previousClose', 'N/A'),
+        'form': form,
+        'portfolio': portfolio,
+        'message': message,
+        'success': success
     }
 
     return render(request, 'trading/instrument_detail.html', context)
+
+
+def portfolio_view(request):
+    portfolio = Portfolio.objects.first()
+
+    holdings = Holding.objects.filter(portfolio=portfolio)
+    transactions = Transaction.objects.filter(portfolio=portfolio).order_by("-timestamp")
+
+    context = {
+        "portfolio": portfolio,
+        "holdings": holdings,
+        "transactions": transactions,
+    }
+    return render(request, "trading/portfolio.html", context)

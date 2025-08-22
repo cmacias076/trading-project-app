@@ -1,0 +1,21 @@
+<h1>My Portfolio</h1>
+
+<p><strong>Cash Balance:</strong> ${{ portfolio.cash_balance }}</p>
+
+<h2>Holdings</h2>
+<ul>
+    {% for holding in holdings %}
+        <li>{{ holding.instrument.symbol }} — {{ holding.quantity }} shares</li>
+    {% empty %}
+        <li>No holdings yet.</li>
+    {% endfor %}
+</ul>
+
+<h2>Transactions</h2>
+<ul>
+    {% for tx in transactions %}
+        <li>{{ tx.timestamp }} — {{ tx.type }} {{ tx.quantity }} {{ tx.instrument.symbol }} at ${{ tx.price }}</li>
+    {% empty %}
+        <li>No transactions yet.</li>
+    {% endfor %}
+</ul>
