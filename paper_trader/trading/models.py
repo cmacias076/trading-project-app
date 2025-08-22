@@ -15,6 +15,7 @@ class Portfolio(models.Model):
         return f"Portfolio - Cash: ${self.cash_balance}"
     
 class Holding(models.Model):
+    portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE)
     instrument = models.ForeignKey(Instrument, on_delete=models.CASCADE)
     quantity = models.DecimalField(max_digits=12, decimal_places=4)
 
@@ -26,6 +27,7 @@ class Transaction(models.Model):
     SELL = 'SELL'
     TYPE_CHOICES = [(BUY, 'Buy'), (SELL, 'Sell')]
 
+    portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE)
     instrument = models.ForeignKey(Instrument, on_delete=models.CASCADE)
     type = models.CharField(max_length=4, choices=TYPE_CHOICES)
     quantity = models.DecimalField(max_digits=12, decimal_places=4)
