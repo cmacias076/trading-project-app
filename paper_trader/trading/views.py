@@ -132,3 +132,13 @@ def portfolio_view(request):
         "total_value": round(total_value, 2),
     }
     return render(request, "trading/portfolio.html", context)
+
+def reset_portfolio(request):
+    portfolio = Portfolio.objects.first() 
+    portfolio.cash_balance = 1000
+    portfolio.save()
+
+    Holding.objects.filter(portfolio=portfolio).delete()
+    Transaction.objects.filter(portfolio=portfolio).delete()
+
+    return redirect('portfolio')
