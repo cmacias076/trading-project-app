@@ -11,7 +11,7 @@ class Instrument(models.Model):
 
 class Portfolio(models.Model):
     cash_balance = models.DecimalField(max_digits=12, decimal_places=2, default=10000)  # start with $10,000
-
+    reset_timestamp = models.DateTimeField(auto_now=True)
     def __str__(self):
         return f"Portfolio - Cash: ${self.cash_balance}"
 
