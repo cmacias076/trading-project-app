@@ -39,3 +39,11 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.type} {self.quantity} {self.instrument.symbol} @ {self.price}"
+    
+class PortfolioSnapshot(models.Model):
+    portfolio = models.ForeignKey(Portfolio, on_delete=models.CASCADE)
+    date = models.DateField(auto_now_add=True)
+    total_value = models.DecimalField(max_digits=12, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.date} - ${self.total_value}"

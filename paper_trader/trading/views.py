@@ -1,6 +1,8 @@
+
+from .models import Portfolio, Holding, Transaction, Instrument, PortfolioSnapshot
+from datetime import date
 import json
 from django.shortcuts import render, get_object_or_404, redirect
-from .models import Portfolio, Holding, Transaction, Instrument
 from .forms import BuyForm
 import yfinance as yf
 
@@ -103,9 +105,30 @@ def portfolio_view(request):
     holdings = Holding.objects.filter(portfolio=portfolio)
     transactions = Transaction.objects.filter(portfolio=portfolio).order_by("-timestamp")
 
+    total_holdings_value = sum(
+        h.quantity * h.instrument.current_price for h in holdings 
+        if h.instrument.current_price
+        for h in holdings if h.instrument.current_price is not None
+    )
+    total_value = portfolio.cash_balance + total_holdings_value
+
+    today = date.today()
+    if not PortfolioSnapshot.objects.filter(portfolio=portfolio, date=today).exists():
+        PortfolioSnapshot.objects.create(
+            portfolio=portfolio,
+            total_value=round(total_value, 2)
+        )
+
+    snapshots = PortfolioSnapshot.objects.filter(portfolio=portfolio).order_by("date")
+    snapshot_dates = [snap.date.strftime('%Y-%m-%d') for snap in snapshots]
+    snapshot_values = [float(snap.total_value) for snap in snapshots]
+
     context = {
         "portfolio": portfolio,
         "holdings": holdings,
         "transactions": transactions,
+        "snapshot_dates": json.dumps(snapshot_dates),
+        "snapshot_values": json.dumps(snapshot_values),
+        "total_value": round(total_value, 2),
     }
     return render(request, "trading/portfolio.html", context)
