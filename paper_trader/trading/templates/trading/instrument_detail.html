@@ -55,5 +55,22 @@
             }
         });
     </script>
+    {% if message %}
+        <div class="alert {% if success %}alert-success{% else %}alert-danger{% endif %} mt-4">
+            {{ message }}
+        </div>
+    {% endif %}
+
+    <h3 class="mt-4">Buy {{ instrument.symbol }}</h3>
+    <form method="post" class="mb-4">
+        {% csrf_token %}
+        <div class="mb-3">
+            {{ form.quantity.label_tag }}
+            {{ form.quantity }}
+        </div>
+        <button type="submit" class="btn btn-primary">Buy</button>
+    </form>
+
+    <p><strong>Available Cash:</strong> ${{ portfolio.cash_balance }}</p>
 </body>
 </html>
