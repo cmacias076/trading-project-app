@@ -7,6 +7,61 @@ from django.contrib import messages
 from .forms import BuyForm
 import yfinance as yf
 
+def sell_instrument(request, symbol):
+    instrument = get_object_or_404(Instrument, symbol=symbol)
+    portfolio = Portfolio.objects.first()
+
+    ticker = yf.Ticker(symbol)
+    latest_price = ticker.info.get("regularMarketPrice")
+
+    if latest_price is None:
+        messages.error(request, "Unable to fetch latest price.")
+        return redirect("portfolio")
+    
+    price = Decimal(str(latest_price))
+    instrument.current_price = price
+    instrument.save(update_fields=["current_price"])
+
+    if request.method == "POST":
+        quantity = int(request.POST.get("quantity", 0))
+
+        try:
+            holding = Holding.objects.get(portfolio=portfolio, instrument=instrument)
+        except Holding.DoesNotExist:
+            messages.error(request, f"You don’t own any shares of {instrument.symbol}.")
+            return redirect("portfolio")
+
+        if quantity <= 0:
+            messages.error(request, "Invalid quantity entered.")
+            return redirect("portfolio")
+
+        if quantity > holding.quantity:
+            messages.error(request, f"You only own {holding.quantity} shares of {instrument.symbol}.")
+            return redirect("portfolio")
+
+        # Process valid sale
+        total_value = price * quantity
+        portfolio.cash_balance += total_value
+        portfolio.save()
+
+        holding.quantity -= quantity
+        if holding.quantity == 0:
+            holding.delete()
+        else:
+            holding.save()
+
+        Transaction.objects.create(
+            instrument=instrument,
+            portfolio=portfolio,
+            type="SELL",
+            quantity=quantity,
+            price=price,
+        )
+
+        messages.success(request, f"Successfully sold {quantity} shares of {instrument.symbol} at ${price}")
+        return redirect("portfolio")
+
+    return render(request, "trading/sell_instrument.html", {"instrument": instrument, "price": price})
 
 def instrument_list(request):
     instruments_data = []
@@ -81,10 +136,9 @@ def instrument_detail(request, symbol):
                     instrument.current_price = price
                     instrument.save(update_fields=["current_price"])
 
-                    message = f"Successfully bought {quantity} shares of {instrument.symbol} at ${price}"
-                    success = True
+                    messages.success(request, f"Bought {quantity} shares of {instrument.symbol} at ${price}")
                 else:
-                    message = "Insufficient cash to complete purchase."
+                    messages.error(request, "Insufficient cash to complete purchase.")
         else:
             message = "Invalid quantity entered."
     else:
@@ -153,4 +207,5 @@ def reset_portfolio(request):
     Holding.objects.filter(portfolio=portfolio).delete()
     Transaction.objects.filter(portfolio=portfolio).delete()
 
+    messages.success(request, "Portfolio has been reset to $10,000 with no holdings.")
     return redirect('portfolio')

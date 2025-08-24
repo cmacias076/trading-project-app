@@ -7,4 +7,5 @@ urlpatterns = [
     path('instruments/', views.instrument_list, name='instrument_list'),
     path('portfolio/', views.portfolio_view, name='portfolio'),
     path('reset/', views.reset_portfolio, name='reset_portfolio'),
+    path('instrument/<str:symbol>/sell/', views.sell_instrument, name='sell_instrument'),
 ]

@@ -8,34 +8,74 @@
 </head>
 <body class="container mt-4">
 
+    <!-- Nav buttons -->
+    <div class="d-flex gap-2 mb-3">
+        <a class="btn btn-outline-primary btn-sm" href="{% url 'instrument_list' %}">Browse instruments</a>
+        <a class="btn btn-outline-secondary btn-sm" href="{% url 'portfolio' %}">Portfolio</a>
+        <a class="btn btn-outline-danger btn-sm" href="{% url 'reset_portfolio' %}">Reset</a>
+    </div>
+
     <h1 class="mb-4">My Portfolio</h1>
 
-    <p><strong>Cash Balance:</strong> ${{ portfolio.cash_balance }}</p>
-    <p><strong>Total Value:</strong> ${{ total_value }}</p>
+    <!-- Django messages (success/error) -->
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
 
-    <form method="post" action="{% url 'reset_portfolio' %}">
+    <!-- Summary -->
+    <p><strong>Cash Balance:</strong> ${{ portfolio.cash_balance|floatformat:2 }}</p>
+    <p><strong>Total Value:</strong> ${{ total_value|floatformat:2 }}</p>
+
+    <!-- Reset button -->
+    <form method="post" action="{% url 'reset_portfolio' %}" class="mb-4">
         {% csrf_token %}
         <button type="submit" class="btn btn-danger">Reset Portfolio</button>
     </form>
 
+    <!-- Holdings -->
     <h2>Holdings</h2>
-    <ul>
+    <ul class="list-group mb-4">
         {% for holding in holdings %}
-            <li>{{ holding.instrument.symbol }} — {{ holding.quantity }} shares</li>
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <a href="{% url 'instrument_detail' holding.instrument.symbol %}">
+                        {{ holding.instrument.symbol }}
+                    </a>
+                    — {{ holding.quantity|floatformat:"-2" }} shares
+                </div>
+                <form method="post" action="{% url 'sell_instrument' holding.instrument.symbol %}" class="d-flex gap-2">
+                    {% csrf_token %}
+                    <input type="number" name="quantity" min="1" max="{{ holding.quantity }}" class="form-control form-control-sm" required>
+                    <button type="submit" class="btn btn-sm btn-warning">Sell</button>
+                </form>
+            </li>
         {% empty %}
-            <li>No holdings yet.</li>
+            <li class="list-group-item">No holdings yet.</li>
         {% endfor %}
     </ul>
 
+    <!-- Transactions -->
     <h2>Transactions</h2>
-    <ul>
+    <ul class="list-group mb-4">
         {% for tx in transactions %}
-            <li>{{ tx.timestamp }} — {{ tx.type }} {{ tx.quantity }} {{ tx.instrument.symbol }} at ${{ tx.price }}</li>
+            <li class="list-group-item">
+                {{ tx.timestamp }} — <strong>{{ tx.type }}</strong> 
+                {{ tx.quantity|floatformat:"-2" }} 
+                <a href="{% url 'instrument_detail' tx.instrument.symbol %}">{{ tx.instrument.symbol }}</a>
+                @ ${{ tx.price|floatformat:2 }}
+                (total ${{ tx.total_value|floatformat:2 }})
+            </li>
         {% empty %}
-            <li>No transactions yet.</li>
+            <li class="list-group-item">No transactions yet.</li>
         {% endfor %}
     </ul>
 
+    <!-- Portfolio chart -->
     <h2>Portfolio Value Over Time</h2>
     <canvas id="portfolioChart" width="800" height="400"></canvas>
 
@@ -58,15 +98,18 @@
                 }]
             },
             options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: true }
+                },
                 scales: {
                     x: { title: { display: true, text: 'Date' }},
                     y: { title: { display: true, text: 'Value (USD)' }}
                 }
             }
         });
-
     </script>
-    
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
