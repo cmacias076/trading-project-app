@@ -3,6 +3,7 @@ from .models import Portfolio, Holding, Transaction, Instrument, PortfolioSnapsh
 from datetime import date
 import json
 from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
 from .forms import BuyForm
 import yfinance as yf
 
@@ -20,6 +21,9 @@ def instrument_list(request):
             latest = round(float(hist["Close"].iloc[-1]), 2)
             prev = round(float(hist["Close"].iloc[-2]), 2)
 
+            inst.current_price = latest
+            inst.save(update_fields=["current_price"])
+
         instruments_data.append({
             "name": inst.name,
             "symbol": inst.symbol,
@@ -36,6 +40,70 @@ def instrument_detail(request, symbol):
     hist = ticker.history(period="1mo")
     dates = hist.index.strftime('%Y-%m-%d').tolist()
     close_prices = hist['Close'].round(2).tolist()
+
+    portfolio = Portfolio.objects.first()
+
+    latest_price = ticker.info.get("regularMarketPrice") 
+    if latest_price is None:
+        latest_price = instrument.current_price
+    else:
+        latest_price = round(float(latest_price), 2)
+        instrument.current_price = latest_price
+        instrument.save(update_fields=["current_price"])
+
+    message = ""
+    success = False
+
+    if request.method == 'POST':
+        form = BuyForm(request.POST)
+        if form.is_valid():
+            quantity= form.cleaned_data['quantity']
+            total_cost= quantity * latest_price
+
+            if portfolio.cash_balance >= total_cost:
+                portfolio.cash_balance -= total_cost
+                portfolio.save()
+
+                holding, created = Holding.objects.get_or_create(
+                    instrument=instrument,
+                    portfolio=portfolio,
+                    defaults={'quantity': quantity}
+                )
+                if not created:
+                    holding.quantity += quantity
+                    holding.save()
+
+                Transaction.objects.create(
+                    instrument=instrument,
+                    portfolio=portfolio,
+                    type='BUY',
+                    quantity=quantity,
+                    price=latest_price
+                )
+                message = f"Successfully bought {quantity} shares of {instrument.symbol} at ${latest_price}"
+                success = True
+            else:
+                message = "Insufficient cash to complete purchase."
+        else:
+            message = "Invalid quantity entered."
+    else:
+        form = BuyForm()
+
+    context = {
+        'instrument': instrument,
+        'dates_json': json.dumps(dates),
+        'close_prices_json': json.dumps(close_prices),
+        'latest_price': latest_price,
+        'previous_close': ticker.info.get('previousClose', 'N/A'),
+        'form': form,
+        'portfolio': portfolio,
+        'message': message,
+        'success': success
+    }
+
+    return render(request, 'trading/instrument_detail.html', context)
+
+    
 
     # Portfolio for the "single user"
     portfolio = Portfolio.objects.first()
@@ -101,15 +169,19 @@ def instrument_detail(request, symbol):
 
 def portfolio_view(request):
     portfolio = Portfolio.objects.first()
-
     holdings = Holding.objects.filter(portfolio=portfolio)
     transactions = Transaction.objects.filter(portfolio=portfolio).order_by("-timestamp")
 
-    total_holdings_value = sum(
-        h.quantity * h.instrument.current_price for h in holdings 
-        if h.instrument.current_price
-        for h in holdings if h.instrument.current_price is not None
-    )
+    total_holdings_value = 0
+    for h in holdings:
+        ticker = yf.Ticker(h.instrument.symbol)
+        latest_price = ticker.info.get("regularMarketPrice")
+
+        if latest_price:
+            h.instrument.current_price = latest_price
+            h.instrument.save()
+            total_holdings_value += h.quantity * latest_price
+                
     total_value = portfolio.cash_balance + total_holdings_value
 
     today = date.today()
@@ -135,7 +207,7 @@ def portfolio_view(request):
 
 def reset_portfolio(request):
     portfolio = Portfolio.objects.first() 
-    portfolio.cash_balance = 1000
+    portfolio.cash_balance = 10000
     portfolio.save()
 
     Holding.objects.filter(portfolio=portfolio).delete()
