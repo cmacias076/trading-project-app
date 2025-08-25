@@ -5,7 +5,7 @@
 {% block content %}
   <div class="mb-3">
     <a href="{% url 'instrument_list' %}" class="btn btn-outline-primary btn-sm">← Back to Instruments</a>
-    <a href="{% url 'sell_instrument' instrument.symbol %}" class="btn btn-warning btn-sm">Sell {{ instrument.symbol }}</a>
+    <a href="{% url 'portfolio' %}" class="btn btn-outline-secondary btn-sm">View Portfolio</a>
   </div>
 
   <h1>{{ instrument.name }} ({{ instrument.symbol }})</h1>
