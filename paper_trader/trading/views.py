@@ -201,6 +201,7 @@ def portfolio_view(request):
 
     total_value = portfolio.cash_balance + total_holdings_value
 
+    # Snapshot portfolio value
     today = date.today()
     if not PortfolioSnapshot.objects.filter(portfolio=portfolio, date=today).exists():
         PortfolioSnapshot.objects.create(
@@ -212,6 +213,10 @@ def portfolio_view(request):
     snapshot_dates = [snap.date.strftime('%Y-%m-%d') for snap in snapshots]
     snapshot_values = [float(snap.total_value) for snap in snapshots]
 
+    # === NEW: Gain/loss percentage ===
+    INITIAL_CASH = Decimal("10000.00")
+    gain_loss_percent = ((total_value - INITIAL_CASH) / INITIAL_CASH) * 100
+
     context = {
         "portfolio": portfolio,
         "holdings": holdings,
@@ -219,9 +224,9 @@ def portfolio_view(request):
         "snapshot_dates": json.dumps(snapshot_dates),
         "snapshot_values": json.dumps(snapshot_values),
         "total_value": round(total_value, 2),
+        "gain_loss_percent": gain_loss_percent,  # Add to context
     }
     return render(request, "trading/portfolio.html", context)
-
 
 def reset_portfolio(request):
     portfolio = Portfolio.objects.first() 

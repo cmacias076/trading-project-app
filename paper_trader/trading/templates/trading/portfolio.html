@@ -3,12 +3,23 @@
 {% block title %}My Portfolio{% endblock %}
 
 {% block content %}
-  <h1 class="mb-4">My Portfolio</h1>
 
-  <a href="{% url 'instrument_history' %}" class="btn btn-outline-primary mb-3">View Historical Charts</a>
+<h1 class="mb-4">My Portfolio</h1>
 
-  <p><strong>Cash Balance:</strong> ${{ portfolio.cash_balance|floatformat:2 }}</p>
-  <p><strong>Total Value:</strong> ${{ total_value|floatformat:2 }}</p>
+    <a href="{% url 'instrument_history' %}" class="btn btn-outline-primary mb-3">View Historical Charts</a>
+
+    <p><strong>Cash Balance:</strong> ${{ portfolio.cash_balance|floatformat:2 }}</p>
+    <p><strong>Total Value:</strong> ${{ total_value|floatformat:2 }}</p>
+
+    {% if gain_loss_percent is not None %}
+     <p>
+       <strong>Gain/Loss:</strong>
+       <span class="{% if gain_loss_percent >= 0 %}text-success{% else %}text-danger{% endif %}">
+        {{ gain_loss_percent|floatformat:2 }}%
+       </span>
+     </p>
+    {% endif %}
+
 
   <form method="post" action="{% url 'reset_portfolio' %}" class="mb-4">
     {% csrf_token %}
