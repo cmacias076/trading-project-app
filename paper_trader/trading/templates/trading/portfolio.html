@@ -3,38 +3,67 @@
 {% block title %}My Portfolio{% endblock %}
 
 {% block content %}
+<div class="container">
 
-<h1 class="mb-4">My Portfolio</h1>
+  <h1 class="mb-4">💼 My Portfolio</h1>
 
-    <a href="{% url 'instrument_history' %}" class="btn btn-outline-primary mb-3">View Historical Charts</a>
+  <!-- Portfolio summary -->
+  <div class="row mb-4">
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h6 class="card-title"><i class="bi bi-cash-stack"></i> Cash Balance</h6>
+          <p class="fs-5 fw-bold text-primary">${{ portfolio.cash_balance|floatformat:2 }}</p>
+        </div>
+      </div>
+    </div>
 
-    <p><strong>Cash Balance:</strong> ${{ portfolio.cash_balance|floatformat:2 }}</p>
-    <p><strong>Total Value:</strong> ${{ total_value|floatformat:2 }}</p>
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h6 class="card-title"><i class="bi bi-piggy-bank"></i> Total Value</h6>
+          <p class="fs-5 fw-bold text-success">${{ total_value|floatformat:2 }}</p>
+        </div>
+      </div>
+    </div>
 
-    {% if gain_loss_percent is not None %}
-     <p>
-       <strong>Gain/Loss:</strong>
-       <span class="{% if gain_loss_percent >= 0 %}text-success{% else %}text-danger{% endif %}">
-        {{ gain_loss_percent|floatformat:2 }}%
-       </span>
-     </p>
-    {% endif %}
+    <div class="col-md-4">
+      <div class="card shadow-sm">
+        <div class="card-body text-center">
+          <h6 class="card-title"><i class="bi bi-graph-up"></i> Gain / Loss</h6>
+          {% if gain_loss_percent is not None %}
+            <p class="fs-5 fw-bold {% if gain_loss_percent >= 0 %}text-success{% else %}text-danger{% endif %}">
+              {% if gain_loss_percent >= 0 %}
+                <i class="bi bi-arrow-up-circle-fill"></i>
+              {% else %}
+                <i class="bi bi-arrow-down-circle-fill"></i>
+              {% endif %}
+              {{ gain_loss_percent|floatformat:2 }}%
+            </p>
+          {% else %}
+            <p class="text-muted">—</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
 
-
-  <form method="post" action="{% url 'reset_portfolio' %}" class="mb-4">
+  <!-- Reset button -->
+  <form method="post" action="{% url 'reset_portfolio' %}" class="mb-4 text-end">
     {% csrf_token %}
-    <button type="submit" class="btn btn-danger">Reset Portfolio</button>
+    <button type="submit" class="btn btn-danger">🔄 Reset Portfolio</button>
   </form>
 
-  <h2>Holdings</h2>
+  <!-- Holdings -->
+  <h2 class="mb-3">📊 Holdings</h2>
   <ul class="list-group mb-4">
     {% for holding in holdings %}
       <li class="list-group-item d-flex justify-content-between align-items-center">
         <div>
-          <a href="{% url 'instrument_detail' holding.instrument.symbol %}">
+          <a href="{% url 'instrument_detail' holding.instrument.symbol %}" class="fw-bold">
             {{ holding.instrument.symbol }}
           </a>
-          — {{ holding.quantity|floatformat:"-2" }} shares
+          — {{ holding.quantity|floatformat:2 }} shares
         </div>
         <form method="post" action="{% url 'sell_instrument' holding.instrument.symbol %}" class="d-flex gap-2">
           {% csrf_token %}
@@ -43,53 +72,80 @@
         </form>
       </li>
     {% empty %}
-      <li class="list-group-item">No holdings yet.</li>
+      <li class="list-group-item text-muted">No holdings yet.</li>
     {% endfor %}
   </ul>
 
-  <h2>Transactions</h2>
+  <!-- Transactions -->
+  <h2 class="mb-3">📜 Transactions</h2>
   <ul class="list-group mb-4">
     {% for tx in transactions %}
       <li class="list-group-item">
-        {{ tx.timestamp }} — <strong>{{ tx.type }}</strong>
-        {{ tx.quantity|floatformat:"-2" }}
-        <a href="{% url 'instrument_detail' tx.instrument.symbol %}">{{ tx.instrument.symbol }}</a>
+        <span class="text-muted">{{ tx.timestamp }}</span> — 
+        <strong>{{ tx.type }}</strong> 
+        {{ tx.quantity|floatformat:2 }} 
+        <a href="{% url 'instrument_detail' tx.instrument.symbol %}" class="fw-bold">{{ tx.instrument.symbol }}</a> 
         @ ${{ tx.price|floatformat:2 }}
-        (total ${{ tx.total_value|floatformat:2 }})
+        <span class="text-muted">(total ${{ tx.total_value|floatformat:2 }})</span>
       </li>
     {% empty %}
-      <li class="list-group-item">No transactions yet.</li>
+      <li class="list-group-item text-muted">No transactions yet.</li>
     {% endfor %}
   </ul>
 
-  <h2>Portfolio Value Over Time</h2>
-  <canvas id="portfolioChart" width="800" height="400"></canvas>
+  <!-- Chart -->
+  <h2 class="mb-3">📈 Portfolio Value Over Time</h2>
+  <div class="card shadow-sm p-3 mb-5">
+    <canvas id="portfolioChart"></canvas>
+  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script>
-    const dates = JSON.parse('{{ snapshot_dates|escapejs }}');
-    const values = JSON.parse('{{ snapshot_values|escapejs }}');
+</div>
 
-    new Chart(document.getElementById('portfolioChart').getContext('2d'), {
-      type: 'line',
-      data: {
-        labels: dates,
-        datasets: [{
-          label: 'Portfolio Value',
-          data: values,
-          borderColor: 'rgba(75, 192, 192, 1)',
-          backgroundColor: 'rgba(75, 192, 192, 0.2)',
-          fill: true,
-          tension: 0.3
-        }]
-      },
-      options: {
-        responsive: true,
-        scales: {
-          x: { title: { display: true, text: 'Date' }},
-          y: { title: { display: true, text: 'Value (USD)' }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const dates = JSON.parse('{{ snapshot_dates|escapejs }}');
+const values = JSON.parse('{{ snapshot_values|escapejs }}');
+
+const ctx = document.getElementById('portfolioChart').getContext('2d');
+const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+gradient.addColorStop(0, 'rgba(13, 110, 253, 0.4)');
+gradient.addColorStop(1, 'rgba(13, 110, 253, 0)');
+
+new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: dates,
+    datasets: [{
+      label: 'Portfolio Value',
+      data: values,
+      borderColor: 'rgba(13, 110, 253, 1)',
+      backgroundColor: gradient,
+      fill: true,
+      tension: 0.3,
+      pointRadius: 3,
+      pointHoverRadius: 6
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      tooltip: {
+        enabled: true,
+        mode: 'index',
+        intersect: false,
+        callbacks: {
+          label: function(context) {
+            return `$${context.formattedValue}`;
+          }
         }
-      }
-    });
-  </script>
+      },
+      legend: { display: false }
+    },
+    scales: {
+      x: { title: { display: true, text: 'Date' }},
+      y: { title: { display: true, text: 'Value (USD)' }}
+    }
+  }
+});
+</script>
 {% endblock %}

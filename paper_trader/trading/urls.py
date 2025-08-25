@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path  
 from . import views
 
 urlpatterns = [
@@ -10,4 +10,3 @@ urlpatterns = [
     path('instrument/<str:symbol>/sell/', views.sell_instrument, name='sell_instrument'),
     path('instruments/history/', views.instrument_history_view, name='instrument_history'),
 ]
-
