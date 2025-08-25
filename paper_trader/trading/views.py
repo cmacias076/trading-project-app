@@ -8,6 +8,7 @@ from .forms import BuyForm
 import yfinance as yf
 from curl_cffi.requests.errors import CurlError
 from requests.exceptions import RequestException
+from django.http import JsonResponse
 
 def sell_instrument(request, symbol):
     instrument = get_object_or_404(Instrument, symbol=symbol)
@@ -232,3 +233,28 @@ def reset_portfolio(request):
 
     messages.success(request, "Portfolio has been reset to $10,000 with no holdings.")
     return redirect('portfolio')
+
+def instrument_history_view(request):
+    instruments = Instrument.objects.all().order_by("symbol")
+    historical_data = []
+
+    for inst in instruments:
+        try:
+            ticker = yf.Ticker(inst.symbol)
+            hist = ticker.history(period="1mo")  # Adjust period as needed
+            if hist.empty:
+                continue
+            dates = hist.index.strftime('%Y-%m-%d').tolist()
+            prices = hist['Close'].round(2).tolist()
+            historical_data.append({
+                "symbol": inst.symbol,
+                "dates": dates,
+                "prices": prices,
+            })
+        except (CurlError, RequestException):
+            continue
+
+    context = {
+        "historical_data": json.dumps(historical_data),
+    }
+    return render(request, "trading/instrument_history.html", context)
