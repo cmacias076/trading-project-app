@@ -1,4 +1,4 @@
-<!-- trading/templates/trading/instrument_list.html -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,7 +32,7 @@
             <tr>
                 <td>{{ instrument.name }}</td>
                 <td>
-                    <a href="{% url 'instrument_detail' instrument.symbol %}">
+                    <a href="{% url 'instrument_detail' symbol=instrument.symbol %}">
                         {{ instrument.symbol }}
                     </a>
                 </td>

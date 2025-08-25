@@ -97,13 +97,8 @@ def instrument_list(request):
 
     return render(request, "trading/instrument_list.html", {"instruments": instruments_data})
 
-
 def instrument_detail(request, symbol):
     instrument = get_object_or_404(Instrument, symbol=symbol)
-    dates = []
-    close_prices = []
-    latest_price = None
-    previous_close = "N/A"
 
     try:
         ticker = yf.Ticker(symbol)
@@ -112,26 +107,75 @@ def instrument_detail(request, symbol):
         close_prices = hist['Close'].round(2).tolist()
         latest_price = ticker.info.get('regularMarketPrice')
         previous_close = ticker.info.get('previousClose', 'N/A')
-    except Exception:
+    except (CurlError, RequestException):
         messages.error(request, f"Unable to load data for {symbol}. Check your internet connection.")
+        dates = []
+        close_prices = []
+        latest_price = None
+        previous_close = "N/A"
 
-        portfolio = Portfolio.objects.first()
+    portfolio = Portfolio.objects.first()
+
+    latest_price_value = latest_price if latest_price is not None else 'N/A'
+
+    if request.method == 'POST':
+        form = BuyForm(request.POST)
+        if form.is_valid():
+            quantity = form.cleaned_data['quantity']
+            if latest_price is None:
+                messages.error(request, "Unable to fetch latest price.")
+            else:
+                price = Decimal(str(latest_price))
+                total_cost = quantity * price
+
+                if portfolio.cash_balance >= total_cost:
+                    portfolio.cash_balance -= total_cost
+                    portfolio.save()
+
+                    holding, created = Holding.objects.get_or_create(
+                        instrument=instrument,
+                        portfolio=portfolio,
+                        defaults={'quantity': quantity}
+                    )
+                    if not created:
+                        holding.quantity += quantity
+                        holding.save()
+
+                    Transaction.objects.create(
+                        instrument=instrument,
+                        portfolio=portfolio,
+                        type='BUY',
+                        quantity=quantity,
+                        price=price
+                    )
+
+                    instrument.current_price = price
+                    instrument.save(update_fields=["current_price"])
+
+                    messages.success(
+                        request,
+                        f"Bought {quantity} shares of {instrument.symbol} at ${price:.2f} each (Total: ${total_cost:.2f})"
+                    )
+                else:
+                    messages.error(request, "Insufficient cash to complete purchase.")
+        else:
+            messages.error(request, "Invalid quantity entered.")    
+    else:
         form = BuyForm()
 
-        context = {
-            'instrument': instrument,
-            'dates_json': json.dumps(dates),
-            'close_prices_json': json.dumps(close_prices),
-            'latest_price': latest_price if latest_price is not None else 'N/A',
-            'previous_close': previous_close,
-            'form': form,
-            'portfolio': portfolio,
-            'message': "",
-            'success': False
-        }
+    context = {
+        'instrument': instrument,
+        'dates_json': json.dumps(dates),
+        'close_prices_json': json.dumps(close_prices),
+        'latest_price': latest_price_value,
+        'previous_close': previous_close,
+        'form': form,
+        'portfolio': portfolio,
+        'message': "",
+        'success': False
+    }
 
     return render(request, 'trading/instrument_detail.html', context)
-
 
 def portfolio_view(request):
     portfolio = Portfolio.objects.first()
