@@ -4,7 +4,16 @@
   <meta charset="UTF-8">
   <title>Paper Trader</title>
 </head>
+
 <body>
+{% if messages %}
+  {% for message in messages %}
+    <div class="alert alert-{{ message.tags }}">
+      {{ message }}
+    </div>
+  {% endfor %}
+{% endif %}
+
   <nav>
     <a href="{% url 'instrument_list' %}">Instruments</a> |
     <a href="{% url 'portfolio' %}">Portfolio</a>
