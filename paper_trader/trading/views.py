@@ -32,19 +32,19 @@ def sell_instrument(request, symbol):
     if request.method == "POST":
         quantity = int(request.POST.get("quantity", 0))
 
-        try:
-            holding = Holding.objects.get(portfolio=portfolio, instrument=instrument)
-        except Holding.DoesNotExist:
-            messages.error(request, f"You don’t own any shares of {instrument.symbol}.")
-            return redirect("portfolio")
-
         if quantity <= 0:
             messages.error(request, "Invalid quantity entered.")
             return redirect("portfolio")
 
-        if quantity > holding.quantity:
-            messages.error(request, f"You only own {holding.quantity} shares of {instrument.symbol}.")
+        holding = Holding.objects.filter(portfolio=portfolio, instrument=instrument).first()
+        if not holding:
+            messages.error(request, f"You don’t own any shares of {instrument.symbol}.")
             return redirect("portfolio")
+
+        if quantity > holding.quantity:
+            messages.error(request, "You don’t own that many shares")
+            return redirect("portfolio")
+
 
         # Process valid sale
         total_value = price * quantity
@@ -65,7 +65,7 @@ def sell_instrument(request, symbol):
             price=price,
         )
 
-        messages.success(request, f"Successfully sold {quantity} shares of {instrument.symbol} at ${price}")
+        messages.success(request, f"Successfully sold {quantity} shares of {instrument.symbol} at ${price:.2f}")
         return redirect("portfolio")
 
     return render(request, "trading/sell_instrument.html", {"instrument": instrument, "price": price})
@@ -229,15 +229,17 @@ def portfolio_view(request):
     return render(request, "trading/portfolio.html", context)
 
 def reset_portfolio(request):
-    portfolio = Portfolio.objects.first() 
-    portfolio.cash_balance = Decimal("10000.00")
-    portfolio.save()
+    if request.method == "POST":
+        Holding.objects.all().delete()
+        Transaction.objects.all().delete()
+        PortfolioSnapshot.objects.all().delete()
+        portfolio = Portfolio.objects.first()
+        if portfolio:
+            portfolio.cash_balance = 10000
+            portfolio.save()
+        messages.success(request, "Portfolio reset successfully.")
+        return redirect("portfolio")
 
-    Holding.objects.filter(portfolio=portfolio).delete()
-    Transaction.objects.filter(portfolio=portfolio).delete()
-
-    messages.success(request, "Portfolio has been reset to $10,000 with no holdings.")
-    return redirect('portfolio')
 
 def instrument_history_view(request):
     instruments = Instrument.objects.all().order_by("symbol")

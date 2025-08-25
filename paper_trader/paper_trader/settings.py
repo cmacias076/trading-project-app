@@ -1,5 +1,6 @@
 import pymysql
 import os
+import sys
 pymysql.install_as_MySQLdb()
 
 """
@@ -82,21 +83,30 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'paper_trader.wsgi.application'
 
+# Detect if we're running tests
+RUNNING_TESTS = 'test' in sys.argv
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
+if RUNNING_TESTS:
+    # Use SQLite for tests
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'paper_trader_db',
-        'USER': 'django_user',
-        'PASSWORD': 'LoveMyWeens2023!',
-        'HOST': 'localhost',
-        'PORT': '3306',
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'test_db.sqlite3'
+        }
     }
-}
-
+else:
+    # Default MySQL database config for normal runs
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'paper_trader_db',
+            'USER': 'django_user',
+            'PASSWORD': 'LoveMyWeens2023!',
+            'HOST': 'localhost',
+            'PORT': '3306',
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
