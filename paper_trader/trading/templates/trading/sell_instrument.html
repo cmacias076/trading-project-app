@@ -1,4 +1,4 @@
-{% extends "trading/base.html" %}
+{% extends 'trading/base.html' %}
 
 {% block title %}Sell {{ instrument.symbol }}{% endblock %}
 
@@ -9,7 +9,7 @@
 
   <div class="card shadow-sm p-4 mb-4">
     <h2 class="mb-3">Sell {{ instrument.symbol }}</h2>
-    <p><strong>Current Price:</strong> ${{ price|floatformat:2 }}</p>
+    <p><strong>Current Price:</strong> ${{ price }}</p>
 
     {% if messages %}
       {% for message in messages %}
@@ -24,7 +24,7 @@
       {% csrf_token %}
       <div class="mb-2">
         <label for="quantity" class="form-label">Quantity to Sell:</label>
-        <input type="number" name="quantity" min="1" max="{{ holding.quantity|floatformat:2 }}" required class="form-control" style="width: 150px;">
+        <input type="number" name="quantity" min="1" max="{{ holding.quantity }}" required class="form-control" style="width: 150px;">
       </div>
       <button type="submit" class="btn btn-warning mt-2 mt-sm-0">Sell</button>
     </form>

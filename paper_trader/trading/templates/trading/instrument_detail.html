@@ -5,12 +5,11 @@
 {% block content %}
 <div class="container mt-4">
 
-  <div class="d-flex gap-2 mb-3">
+  <div class="mb-3">
     <a href="{% url 'instrument_list' %}" class="btn btn-outline-primary btn-sm">← Back to Instruments</a>
     <a href="{% url 'portfolio' %}" class="btn btn-outline-secondary btn-sm">View Portfolio</a>
   </div>
 
-  <!-- Instrument Summary -->
   <div class="card shadow-sm p-4 mb-4">
     <h1 class="mb-3">{{ instrument.name }} ({{ instrument.symbol }})</h1>
     <p>
@@ -19,15 +18,13 @@
     </p>
   </div>
 
-  <!-- Historical Prices Chart -->
   <div class="card shadow-sm p-4 mb-4">
-    <h3 class="mb-3">📊 Historical Prices (Last 30 Days)</h3>
-    <canvas id="priceChart" width="800" height="400"></canvas>
+    <h3 class="mb-3">Historical Prices (Last 30 Days)</h3>
+    <canvas id="priceChart" class="mb-3"></canvas>
   </div>
 
-  <!-- Buy Form -->
   <div class="card shadow-sm p-4 mb-4">
-    <h3 class="mb-3">💰 Buy {{ instrument.symbol }}</h3>
+    <h3 class="mb-3">Buy {{ instrument.symbol }}</h3>
 
     {% if messages %}
       {% for message in messages %}
@@ -54,47 +51,49 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-const dates = JSON.parse('{{ dates_json|escapejs }}');
-const closePrices = JSON.parse('{{ close_prices_json|escapejs }}');
+  const dates = JSON.parse('{{ dates_json|escapejs }}');
+  const closePrices = JSON.parse('{{ close_prices_json|escapejs }}');
 
-const ctx = document.getElementById('priceChart').getContext('2d');
-const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-gradient.addColorStop(0, 'rgba(13, 110, 253, 0.4)');
-gradient.addColorStop(1, 'rgba(13, 110, 253, 0)');
+  const ctx = document.getElementById('priceChart').getContext('2d');
+  const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+  gradient.addColorStop(0, 'rgba(75, 192, 192, 0.3)');
+  gradient.addColorStop(1, 'rgba(75, 192, 192, 0)');
 
-new Chart(ctx, {
-  type: 'line',
-  data: {
-    labels: dates,
-    datasets: [{
-      label: 'Close Price',
-      data: closePrices,
-      borderColor: 'rgba(13, 110, 253, 1)',
-      backgroundColor: gradient,
-      fill: true,
-      tension: 0.3,
-      pointRadius: 3,
-      pointHoverRadius: 6
-    }]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      tooltip: {
-        enabled: true,
-        mode: 'index',
-        intersect: false,
-        callbacks: {
-          label: function(context) { return `$${context.formattedValue}`; }
-        }
-      },
-      legend: { display: false }
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: dates,
+      datasets: [{
+        label: 'Close Price',
+        data: closePrices,
+        borderColor: 'rgba(75, 192, 192, 1)',
+        backgroundColor: gradient,
+        fill: true,
+        tension: 0.3,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: 'rgba(0,123,255,1)'
+      }]
     },
-    scales: {
-      x: { title: { display: true, text: 'Date' }},
-      y: { title: { display: true, text: 'Price (USD)' }}
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      interaction: {
+        mode: 'nearest',
+        axis: 'x',
+        intersect: false
+      },
+      scales: {
+        x: { title: { display: true, text: 'Date' }},
+        y: { title: { display: true, text: 'Price (USD)' }}
+      }
     }
-  }
-});
+  });
+
+  // Initialize tooltips
+  const tooltipList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipList.map(el => new bootstrap.Tooltip(el));
 </script>
 {% endblock %}

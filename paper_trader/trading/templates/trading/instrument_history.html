@@ -13,69 +13,66 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-const data = JSON.parse(`{{ historical_data|safe|escapejs }}`);
+  const data = JSON.parse(`{{ historical_data|safe|escapejs }}`);
 
-data.forEach(instrument => {
-  // Container column
-  const colDiv = document.createElement('div');
-  colDiv.classList.add('col-12', 'col-md-6');
+  data.forEach(instrument => {
+    // Create column
+    const colDiv = document.createElement('div');
+    colDiv.classList.add('col-12', 'col-md-6');
 
-  // Card wrapper
-  const cardDiv = document.createElement('div');
-  cardDiv.classList.add('card', 'shadow-sm', 'p-3', 'mb-4');
+    // Create card container
+    const cardDiv = document.createElement('div');
+    cardDiv.classList.add('card', 'shadow-sm', 'p-3', 'mb-4');
 
-  // Canvas for chart
-  const canvas = document.createElement('canvas');
-  cardDiv.appendChild(canvas);
-  colDiv.appendChild(cardDiv);
-  document.getElementById('charts-container').appendChild(colDiv);
+    // Canvas inside card
+    const canvas = document.createElement('canvas');
+    cardDiv.appendChild(canvas);
+    colDiv.appendChild(cardDiv);
+    document.getElementById('charts-container').appendChild(colDiv);
 
-  // Gradient
-  const ctx = canvas.getContext('2d');
-  const gradient = ctx.createLinearGradient(0, 0, 0, 400);
-  gradient.addColorStop(0, 'rgba(13, 110, 253, 0.4)');
-  gradient.addColorStop(1, 'rgba(13, 110, 253, 0)');
+    const ctx = canvas.getContext('2d');
+    const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+    gradient.addColorStop(0, 'rgba(75, 192, 192, 0.4)');
+    gradient.addColorStop(1, 'rgba(75, 192, 192, 0)');
 
-  // Chart
-  new Chart(canvas, {
-    type: 'line',
-    data: {
-      labels: instrument.dates,
-      datasets: [{
-        label: instrument.symbol,
-        data: instrument.prices,
-        borderColor: 'rgba(13, 110, 253, 1)',
-        backgroundColor: gradient,
-        fill: true,
-        tension: 0.3,
-        pointRadius: 2,
-        pointHoverRadius: 5
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        title: {
-          display: true,
-          text: `Price History - ${instrument.symbol}`,
-          font: { size: 16 }
-        },
-        tooltip: {
-          enabled: true,
-          mode: 'index',
-          intersect: false,
-          callbacks: {
-            label: function(ctx) { return `$${ctx.formattedValue}`; }
-          }
-        },
-        legend: { display: false }
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: instrument.dates,
+        datasets: [{
+          label: instrument.symbol,
+          data: instrument.prices,
+          borderColor: 'rgba(75, 192, 192, 1)',
+          backgroundColor: gradient,
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4,
+          pointHoverRadius: 7
+        }]
       },
-      scales: {
-        x: { title: { display: true, text: 'Date' }},
-        y: { title: { display: true, text: 'Price (USD)' }}
+      options: {
+        responsive: true,
+        plugins: {
+          tooltip: {
+            mode: 'index',
+            intersect: false,
+            callbacks: {
+              label: context => `$${context.formattedValue}`
+            }
+          },
+          title: {
+            display: true,
+            text: `Price History - ${instrument.symbol}`,
+            font: { size: 16 }
+          },
+          legend: { display: false }
+        },
+        scales: {
+          x: { title: { display: true, text: 'Date' } },
+          y: { title: { display: true, text: 'Price (USD)' } }
+        }
       }
-    }
+    });
   });
-});
 </script>
 {% endblock %}

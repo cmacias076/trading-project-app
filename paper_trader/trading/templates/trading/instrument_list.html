@@ -1,6 +1,6 @@
 {% extends 'trading/base.html' %}
 
-{% block title %}Instrument List{% endblock %}
+{% block title %}Market Instruments{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
@@ -19,16 +19,14 @@
         </thead>
         <tbody>
           {% for instrument in instruments %}
-            <tr>
+            <tr data-bs-toggle="tooltip" title="Click symbol to view details">
               <td>{{ instrument.name }}</td>
               <td>
                 <a href="{% url 'instrument_detail' symbol=instrument.symbol %}" class="fw-bold text-decoration-none">
                   {{ instrument.symbol }}
                 </a>
               </td>
-              <td class="{% if instrument.price >= instrument.previous_close %}text-success{% else %}text-danger{% endif %}">
-                ${{ instrument.price|floatformat:2 }}
-              </td>
+              <td class="text-success">${{ instrument.price|floatformat:2 }}</td>
               <td class="text-muted">${{ instrument.previous_close|floatformat:2 }}</td>
             </tr>
           {% endfor %}
@@ -37,4 +35,10 @@
     </div>
   </div>
 </div>
+
+<script>
+  // Initialize tooltips
+  const tooltipList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipList.map(el => new bootstrap.Tooltip(el));
+</script>
 {% endblock %}
