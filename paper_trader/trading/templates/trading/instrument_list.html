@@ -1,32 +1,32 @@
 {% extends 'trading/base.html' %}
 
-{% block title %}Market Instruments{% endblock %}
+{% block title %}Instrument List{% endblock %}
 
 {% block content %}
 <div class="container mt-4">
   <h1 class="mb-4">📈 Market Instruments</h1>
 
   <div class="card shadow-sm">
-    <div class="card-body">
-      <table class="table table-striped table-hover align-middle">
+    <div class="card-body p-0">
+      <table class="table table-hover table-striped align-middle mb-0">
         <thead class="table-dark">
           <tr>
             <th scope="col">Name</th>
             <th scope="col">Symbol</th>
-            <th scope="col">Current Price</th>
-            <th scope="col">Previous Close</th>
+            <th scope="col" title="Current trading price">Current Price</th>
+            <th scope="col" title="Previous day close price">Previous Close</th>
           </tr>
         </thead>
         <tbody>
           {% for instrument in instruments %}
-            <tr data-bs-toggle="tooltip" title="Click symbol to view details">
+            <tr class="align-middle">
               <td>{{ instrument.name }}</td>
               <td>
                 <a href="{% url 'instrument_detail' symbol=instrument.symbol %}" class="fw-bold text-decoration-none">
                   {{ instrument.symbol }}
                 </a>
               </td>
-              <td class="text-success">${{ instrument.price|floatformat:2 }}</td>
+              <td class="text-success fw-bold">${{ instrument.price|floatformat:2 }}</td>
               <td class="text-muted">${{ instrument.previous_close|floatformat:2 }}</td>
             </tr>
           {% endfor %}
@@ -36,9 +36,16 @@
   </div>
 </div>
 
+<!-- Optional Chart.js sparkline for quick overview -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  // Initialize tooltips
-  const tooltipList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-  tooltipList.map(el => new bootstrap.Tooltip(el));
+document.querySelectorAll('table tbody tr').forEach(row => {
+  row.addEventListener('mouseenter', () => {
+    row.style.background = 'linear-gradient(90deg, rgba(13,110,253,0.1), rgba(0,123,255,0.05))';
+  });
+  row.addEventListener('mouseleave', () => {
+    row.style.background = '';
+  });
+});
 </script>
 {% endblock %}
